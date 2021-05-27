@@ -34,6 +34,10 @@ function tagOpen(c) {
   } else if (c === "/") {
     return endTagOpen;
   } else {
+    emit({
+      type: "text",
+      content: c
+    })
     return;
   }
 }
@@ -42,6 +46,10 @@ function endTagOpen(c) {
   if (c === ">") {
     // console.log(c);
   } else if (c.match(/^[a-zA-Z]$/)) {
+    currentToken = {
+      type: "endTag",
+      tagName: ""
+    }
     return tagName(c);
   } else {
     return;
@@ -64,6 +72,7 @@ function tagName(c) {
     emit(currentToken);
     return data;
   } else {
+    currentToken.tagName += c;
     return tagName;
   }
 }
@@ -126,8 +135,10 @@ function beforeAttributeValue(c) {
   if (c.match(/^[\t\n\f ]$/) || c === "/" || c === ">" || c === EOF) {
     return beforeAttributeValue;
   } else if (c === "\"") {
+    // 判断属性值是否是双引号包裹
     return doubleQuotedAttributeValue;
   } else if (c === "\'") {
+    // 判断属性值是否是单引号包裹
     return singleQuotedAttributeValue;
   } else if (c === ">") {
 
@@ -169,7 +180,7 @@ function doubleQuotedAttributeValue(c) {
 }
 
 function singleQuotedAttributeValue(c) {
-  if (c === "'") {
+  if (c === "\'") {
     currentToken[currentAttribute.name] = currentAttribute.value;
     return afterQuotedAttributeValue;
   } else if (c === "\u0000") {
@@ -210,6 +221,7 @@ function selfClosingStartTag(c) {
   if (c === ">") {
     // 自封闭标签
     currentToken.isSelfClosing = true;
+    emit(currentToken);
     return data;
   } else if (c === "EOF") {
   } else {
