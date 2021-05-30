@@ -3,9 +3,53 @@ const EOF = Symbol("EOF"); // EOF: End Of File
 let currentToken = null;
 let currentAttribute = null;
 
+let stack = [{type: "document", children: []}];
+
 function emit(token) {
-  if (token.type !== "text") {
-    console.log(token);
+  if (token.type === "text") return;
+  // 获取到入栈的最后一个节点
+  let top = stack[stack.length - 1];
+  
+  // 判断是否为开始标签
+  if (token.type === "startTag") {
+    // 创建一个元素
+    let element = {
+      type: "element",
+      children: [],
+      attributes: []
+    }
+    
+    // 赋予tagName
+    element.tagName = token.tagName;
+
+    for (let p in token) {
+      if (p !== "type" && p !== "tagName") {
+        // 收集属性值
+        element.attributes.push({
+          name: p,
+          value: token[p]
+        });
+      }
+    }
+    
+    // 追加到追后一个栈元素的子集中
+    top.children.push(element);
+    // 赋予父级节点
+    element.parent = top;
+
+    // 如果标签为自闭合标签，入栈
+    if (!token.isSelfClosing)
+      stack.push(element);
+
+    // 判断如果为结束标签
+  } else if (token.type === "endTag") {
+    // 判断标签名是否一直
+    if (top.tagName !== token.tagName) {
+      throw new Error("Tag start end doesn’t match!");
+    } else {
+      // 出栈，表示当前节点解析完毕
+      stack.pop();
+    }
   }
 }
 
