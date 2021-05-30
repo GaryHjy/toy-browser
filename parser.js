@@ -4,10 +4,13 @@ let currentToken = null;
 let currentAttribute = null;
 
 function emit(token) {
-  console.log(token);
+  if (token.type !== "text") {
+    console.log(token);
+  }
 }
 
 function data(c) {
+  // 判断开始标签
   if (c === "<") {
     return tagOpen;
   } else if (c === EOF) {
