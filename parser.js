@@ -3,10 +3,10 @@ const EOF = Symbol("EOF"); // EOF: End Of File
 let currentToken = null;
 let currentAttribute = null;
 
+let currentTextNode = null;
 let stack = [{type: "document", children: []}];
 
 function emit(token) {
-  if (token.type === "text") return;
   // 获取到入栈的最后一个节点
   let top = stack[stack.length - 1];
   
@@ -41,6 +41,9 @@ function emit(token) {
     if (!token.isSelfClosing)
       stack.push(element);
 
+    // 置空
+    currentTextNode = null;
+
     // 判断如果为结束标签
   } else if (token.type === "endTag") {
     // 判断标签名是否一直
@@ -50,6 +53,21 @@ function emit(token) {
       // 出栈，表示当前节点解析完毕
       stack.pop();
     }
+    // 置空
+    currentTextNode = null;
+
+    // 判断是否为文本节点
+  } else if (token.type === "text") {
+    if (currentTextNode === null) {
+      currentTextNode = {
+        type: "text",
+        content: ""
+      }
+      // 追加到栈的最后一个节点的子集
+      top.children.push(currentTextNode);
+    }
+    // 拼接文本内容
+    currentTextNode.content += token.content;
   }
 }
 
@@ -270,7 +288,7 @@ function selfClosingStartTag(c) {
     currentToken.isSelfClosing = true;
     emit(currentToken);
     return data;
-  } else if (c === "EOF") {
+  } else if (c === EOF) {
   } else {
 
   }
@@ -284,4 +302,5 @@ module.exports.parseHTML = function parseHTML(html) {
     state = state(c);
   }
   state = state(EOF);
+  console.log(stack[0]);
 }
