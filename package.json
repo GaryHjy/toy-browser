@@ -1,0 +1,25 @@
+{
+  "name": "toy-browser",
+  "version": "1.0.0",
+  "description": "简易浏览器",
+  "main": "client.js",
+  "dependencies": {
+    "css": "^3.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start:server": "node server.js",
+    "start:client": "node client.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GaryHjy/toy-browser.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GaryHjy/toy-browser/issues"
+  },
+  "homepage": "https://github.com/GaryHjy/toy-browser#readme"
+}
