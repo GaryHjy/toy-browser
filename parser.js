@@ -1,3 +1,4 @@
+const css = require('css');
 const EOF = Symbol("EOF"); // EOF: End Of File
 
 let currentToken = null;
@@ -5,6 +6,75 @@ let currentAttribute = null;
 
 let currentTextNode = null;
 let stack = [{type: "document", children: []}];
+
+const rules = [];
+
+function addCSSRules(text) {
+  const ast = css.parse(text);
+  // console.log(JSON.stringify(ast, null, '  '));
+  rules.push(...ast.stylesheet.rules);
+}
+
+function computeCSS(element) {
+  // console.log(rules);
+  // console.log(element);
+  const elements = stack.slice().reverse();
+  // console.log(elements);
+  
+  if (!element.computedStyle) {
+    element.computedStyle = {};
+  }
+
+  for (let rule of rules) {
+    const selectorParts = rule.selectors[0].split(' ').reverse();
+
+    // 判断第一个选择器是否与元素匹配
+    if (!match(element, selectorParts[0])) continue;
+    
+    let matched = false;
+
+    let j = 1;
+    for (let i = 0; i < selectorParts.length; i++) {
+      // console.log(i, elements[i], selectorParts, selectorParts[j]);
+      console.log(elements, elements[i]);
+      if (match(elements[i], selectorParts[j])) {
+        j++;
+      }
+    }
+    if (j >= selectorParts.length) {
+      matched = true;
+    }
+
+    if (matched) {
+      // console.log("ok", element, rule);
+    }
+  }
+}
+
+function match(element, selector) {
+  if (!selector || !element.attributes) {
+    return false;
+  }
+
+  // 判断是否为id选择器
+  if (selector.charAt(0) === "#") {
+    const attr = element.attributes.filter(attr => attr.name === "id")[0];
+    if (attr && attr.value === selector.replace("#", "")) {
+      return true;
+    }
+    // 判断是否为class选择器
+  } else if (selector.charAt(0) === ".") {
+    const attr = element.attributes.filter(attr => attr.name === "class")[0];
+    if (attr && attr.value === selector.replace(".", "")) {
+      return true;
+    }
+  } else {
+    if (element.tagName === selector) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function emit(token) {
   // 获取到入栈的最后一个节点
@@ -31,6 +101,8 @@ function emit(token) {
         });
       }
     }
+
+    computeCSS(element);
     
     // 追加到追后一个栈元素的子集中
     top.children.push(element);
@@ -50,6 +122,11 @@ function emit(token) {
     if (top.tagName !== token.tagName) {
       throw new Error("Tag start end doesn’t match!");
     } else {
+
+      if (top.tagName === "style") {
+        addCSSRules(top.children[0].content);
+      }
+
       // 出栈，表示当前节点解析完毕
       stack.pop();
     }
@@ -302,5 +379,5 @@ module.exports.parseHTML = function parseHTML(html) {
     state = state(c);
   }
   state = state(EOF);
-  console.log(stack[0]);
+  // console.log(stack[0]);
 }
